@@ -6,11 +6,13 @@
     <title>Google Predplatné Kalkulačka</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         .animate-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        /* Načítavacia obrazovka */
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; gap: 15px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 
     <script>
@@ -21,49 +23,40 @@
             if(root) {
                 root.innerHTML = `
                     <div style="color: #7f1d1d; background: #fef2f2; border: 2px solid #b91c1c; padding: 20px; margin: 20px; border-radius: 8px; font-family: sans-serif;">
-                        <h2 style="font-weight: bold; margin-bottom: 10px;">⚠️ Nastala chyba pri spúšťaní:</h2>
+                        <h2 style="font-weight: bold; margin-bottom: 10px;">⚠️ Nastala chyba:</h2>
                         <p>${message}</p>
-                        <p style="font-size: 0.8em; color: #666; margin-top: 10px;">Skontroluj internetové pripojenie. (Line: ${lineno})</p>
+                        <p style="margin-top:10px; font-size: 0.9em">Skús vypnúť AdBlock, ak ho používaš.</p>
                     </div>
                 `;
             }
         };
     </script>
 
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/recharts@2.12.0/umd/Recharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
 </head>
 <body class="bg-gray-50">
 
     <div id="loading">
-        <div class="text-xl font-semibold text-gray-600">⌛ Načítavam aplikáciu...</div>
+        <div class="spinner"></div>
+        <div class="text-gray-600 font-medium">Načítavam aplikáciu...</div>
     </div>
 
     <div id="root"></div>
 
     <script type="text/babel">
-        // Skryjeme načítavaciu obrazovku keď začne script bežať
-        setTimeout(() => {
-            const loader = document.getElementById('loading');
-            if(loader) loader.style.display = 'none';
-        }, 500);
-
-        // Získanie knižníc
-        const { useState, useEffect } = React;
-        const { createRoot } = ReactDOM;
-        
-        // Bezpečné načítanie Recharts
-        const RechartsObj = window.Recharts || {};
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } = RechartsObj;
-
-        // Ak sa knižnica Recharts nenačítala, vyhodíme chybu ručne
-        if (!BarChart) {
-            throw new Error("Nepodarilo sa stiahnuť knižnicu Recharts (grafy). Skontroluj pripojenie k internetu.");
+        // Kontrola načítania knižníc
+        if (!window.React || !window.ReactDOM || !window.Recharts) {
+            throw new Error("Nepodarilo sa stiahnuť potrebné knižnice (React alebo Recharts). Skontroluj internet alebo vypni AdBlock.");
         }
 
-        // --- ZAČIATOK APLIKÁCIE ---
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } = Recharts;
+
+        // --- ZAČIATOK TVOJHO KÓDU ---
 
         const Card = ({ children, className = "" }) => {
           const defaultBg = className.includes('bg-') ? '' : 'bg-white';
@@ -213,6 +206,12 @@
                 setIsAnalyzing(false);
             }, 1500);
           };
+
+          // Skryjeme loader po načítaní komponentu
+          useEffect(() => { 
+             const loader = document.getElementById('loading');
+             if(loader) loader.style.display = 'none';
+          }, []);
 
           useEffect(() => { setAiAnalysis(''); }, [selections]);
 
